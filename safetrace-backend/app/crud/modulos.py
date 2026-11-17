@@ -16,17 +16,25 @@ from app.crud import auditoria
 from app.crud import modulo_permisos as crud_modulo_permisos
 from app.crud.roles import SUPERADMIN
 from app.schemas.modulos import ModuloCreate, ModuloUpdate
+from core import cache
+from core.errores import ErrorNegocio
 from core.fechas import ahora
 
 MODULOS_PROTEGIDOS = ("roles", "modulos", "permisos")
 
 
-class ModuloDuplicado(Exception):
+class ModuloDuplicado(ErrorNegocio):
     """Ya existe un módulo con ese nombre."""
 
+    codigo = "MODULO_DUPLICADO"
+    mensaje = "Ya existe un módulo con ese nombre"
 
-class ModuloProtegido(Exception):
+
+class ModuloProtegido(ErrorNegocio):
     """Los módulos de administración de permisos no se desactivan."""
+
+    codigo = "MODULO_PROTEGIDO"
+    mensaje = "Los módulos roles, modulos y permisos no se desactivan"
 
 
 def crear_modulo(db: Database, modulo: ModuloCreate, actor: dict) -> dict:
@@ -71,6 +79,7 @@ def cambiar_estado_modulo(db: Database, nombre_modulo: str, estado: bool, actor:
     )
     if anterior is None:
         return None
+    cache.permisos_invalidar()
     auditoria.registrar(
         db, "modulos", nombre_modulo, "CAMBIAR_ESTADO_MODULO", actor, {"anterior": anterior["estado"], "nuevo": estado}
     )

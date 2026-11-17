@@ -1,0 +1,119 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "historial_estados (8.5)",
+    "required": [
+      "inmueble_id",
+      "estado_anterior",
+      "estado_nuevo",
+      "fecha",
+      "causa",
+      "producido_por"
+    ],
+    "properties": {
+      "inmueble_id": {
+        "bsonType": "objectId"
+      },
+      "estado_anterior": {
+        "bsonType": [
+          "int",
+          "long"
+        ],
+        "minimum": 1,
+        "maximum": 5
+      },
+      "estado_nuevo": {
+        "bsonType": [
+          "int",
+          "long"
+        ],
+        "minimum": 1,
+        "maximum": 5
+      },
+      "fecha": {
+        "bsonType": "date"
+      },
+      "causa": {
+        "enum": [
+          "SISMO_RELEVANTE",
+          "REVISION_REGISTRADA",
+          "SIN_CAMBIOS",
+          "INSPECCION_SOLICITADA",
+          "INSPECCION_FIRMADA",
+          "CONSTANCIA_VENCIDA"
+        ]
+      },
+      "referencia": {
+        "bsonType": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "tipo": {
+            "enum": [
+              "SISMO",
+              "REVISION",
+              "SOLICITUD_INSPECCION",
+              "INSPECCION",
+              "INMUEBLE"
+            ]
+          },
+          "id": {
+            "bsonType": "objectId"
+          }
+        },
+        "required": [
+          "tipo",
+          "id"
+        ]
+      },
+      "producido_por": {
+        "anyOf": [
+          {
+            "bsonType": "object",
+            "properties": {
+              "tipo": {
+                "enum": [
+                  "USUARIO"
+                ]
+              },
+              "id": {
+                "bsonType": "objectId"
+              },
+              "rol": {
+                "bsonType": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[A-Z][A-Z_]{2,29}$"
+              }
+            },
+            "required": [
+              "tipo",
+              "id"
+            ]
+          },
+          {
+            "bsonType": "object",
+            "properties": {
+              "tipo": {
+                "enum": [
+                  "PROCESO"
+                ]
+              },
+              "id": {
+                "bsonType": "string",
+                "minLength": 1,
+                "maxLength": 60
+              }
+            },
+            "required": [
+              "tipo",
+              "id"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

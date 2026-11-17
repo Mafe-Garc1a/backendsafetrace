@@ -14,8 +14,29 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Header", "fastapi.Query", "app.router.dependencies.requiere_permiso"]
 
+# Formato del código; la CI lo comprueba con `ruff format --check` (AUD-10)
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# Contratos de dependencia (Estructura del backend v2, sección 6; AUD-01). Se comprueban con `lint-imports`.
+[tool.importlinter]
+root_packages = ["app", "core", "trabajador"]
+
+[[tool.importlinter.contracts]]
+name = "Capas de la aplicación"
+type = "layers"
+layers = ["app.router", "app.servicios", "app.crud"]
+
+[[tool.importlinter.contracts]]
+name = "core no depende de la aplicación"
+type = "forbidden"
+source_modules = ["core"]
+forbidden_modules = ["app", "trabajador"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["sin_validar: la prueba inserta a mano documentos incompletos; no se revisan contra los validadores"]
 filterwarnings = [
     "ignore::DeprecationWarning:mongomock.*",
     "ignore:Using `httpx` with `starlette.testclient`",

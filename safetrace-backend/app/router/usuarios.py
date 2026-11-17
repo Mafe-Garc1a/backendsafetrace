@@ -1,4 +1,9 @@
-"""Rutas de A · Cuentas: administración de usuarios y supresión de datos (RF-04 a RF-06, RF-08, RF-09)."""
+"""Rutas de A · Cuentas: administración de usuarios y supresión de datos (RF-04 a RF-06, RF-08, RF-09, RF-74).
+
+Reparto entre administradores (ERS v2.1, RNF-08 y RF-74; Diseño DataBase v3, 6.1):
+- El administrador general activa o desactiva cuentas y cambia el rol entre PROPIETARIO y PERITO.
+- Solo el SUPERADMIN crea, activa y desactiva cuentas ADMINISTRADOR_GENERAL y da o quita ese rol.
+"""
 
 from typing import Literal
 
@@ -10,7 +15,14 @@ from app.crud import usuarios as crud_usuarios
 from app.crud.auditoria import actor_usuario
 from app.crud.roles import SUPERADMIN
 from app.router.dependencies import get_current_user, requiere_permiso
-from app.schemas.usuarios import SolicitudSupresionOut, UsuarioEstado, UsuarioOut, UsuarioPage, UsuarioRol
+from app.schemas.usuarios import (
+    AdministradorCreate,
+    SolicitudSupresionOut,
+    UsuarioEstado,
+    UsuarioOut,
+    UsuarioPage,
+    UsuarioRol,
+)
 from core.database import a_object_id, get_db, serializar
 from core.paginacion import Pagina
 
@@ -26,12 +38,37 @@ def _obtener_objetivo(db: Database, usuario_id: str) -> dict:
     return usuario
 
 
-def _proteger_superadmin(admin: dict, *roles_involucrados: str) -> None:
-    """Solo un SUPERADMIN asigna, quita o modifica a otro SUPERADMIN."""
-    if SUPERADMIN in roles_involucrados and admin["rol"] != SUPERADMIN:
+def _proteger_cuentas_admin(admin: dict, *roles_involucrados: str) -> None:
+    """Fuera del SUPERADMIN, solo se gestionan cuentas y roles PROPIETARIO y PERITO (RF-74)."""
+    if admin["rol"] == SUPERADMIN:
+        return
+    if any(rol not in crud_usuarios.ROLES_GESTIONA_ADMINISTRADOR for rol in roles_involucrados):
         raise HTTPException(
-            status_code=403, detail="Solo un superadministrador puede gestionar a un superadministrador"
+            status_code=403,
+            detail="Solo el superadministrador gestiona cuentas de administrador general o superadministrador",
         )
+
+
+def _solo_superadmin(usuario: dict = Depends(requiere_permiso(modulo, "insertar"))) -> dict:
+    if usuario["rol"] != SUPERADMIN:
+        raise HTTPException(status_code=403, detail="Solo el superadministrador crea cuentas de administrador")
+    return usuario
+
+
+@router.post(
+    "/admin/administradores",
+    response_model=UsuarioOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Crear una cuenta de administrador general (solo superadministrador)",
+    description="RF-74. El administrador recibe un enlace de un solo uso para elegir su contraseña (RF-73).",
+)
+def crear_administrador(
+    datos: AdministradorCreate,
+    db: Database = Depends(get_db),
+    superadmin: dict = Depends(_solo_superadmin),
+):
+    creado = crud_usuarios.crear_administrador(db, datos.nombre_completo, datos.correo, actor_usuario(superadmin))
+    return serializar(creado)
 
 
 @router.get(
@@ -71,7 +108,7 @@ def activar_desactivar_usuario(
     objetivo = _obtener_objetivo(db, usuario_id)
     if objetivo["_id"] == admin["_id"] and not cambio.activo:
         raise HTTPException(status_code=400, detail="No puede desactivar su propia cuenta")
-    _proteger_superadmin(admin, objetivo["rol"])
+    _proteger_cuentas_admin(admin, objetivo["rol"])
     usuario = crud_usuarios.cambiar_activo(db, objetivo["_id"], cambio.activo, actor_usuario(admin))
     if usuario is None:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -95,7 +132,7 @@ def cambiar_rol(
         raise HTTPException(status_code=400, detail="No puede cambiar su propio rol")
     if not crud_roles.rol_activo(db, cambio.rol):
         raise HTTPException(status_code=400, detail=f"Rol inexistente o inactivo: {cambio.rol}")
-    _proteger_superadmin(admin, objetivo["rol"], cambio.rol)
+    _proteger_cuentas_admin(admin, objetivo["rol"], cambio.rol)
     usuario = crud_usuarios.cambiar_rol(db, objetivo["_id"], cambio.rol, actor_usuario(admin))
     if usuario is None:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")

@@ -1,0 +1,67 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "indices_priorizacion (10.2)",
+    "required": [
+      "inmueble_id",
+      "sismo_id",
+      "valor",
+      "variables",
+      "aviso",
+      "formula_version",
+      "calculado_en"
+    ],
+    "properties": {
+      "inmueble_id": {
+        "bsonType": "objectId"
+      },
+      "sismo_id": {
+        "bsonType": "objectId"
+      },
+      "valor": {
+        "bsonType": [
+          "double",
+          "int",
+          "long",
+          "decimal"
+        ],
+        "minimum": 0,
+        "maximum": 100
+      },
+      "variables": {
+        "bsonType": "object"
+      },
+      "variables_normalizadas": {
+        "bsonType": "object"
+      },
+      "pesos": {
+        "bsonType": "object"
+      },
+      "aportes": {
+        "bsonType": "object"
+      },
+      "parametros": {
+        "bsonType": "object"
+      },
+      "aviso": {
+        "bsonType": "string",
+        "minLength": 10,
+        "maxLength": 300
+      },
+      "formula_version": {
+        "bsonType": "string",
+        "minLength": 1,
+        "maxLength": 20
+      },
+      "schema_version": {
+        "enum": [
+          2,
+          3
+        ]
+      },
+      "calculado_en": {
+        "bsonType": "date"
+      }
+    }
+  }
+}

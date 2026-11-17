@@ -14,17 +14,24 @@ from pymongo.errors import DuplicateKeyError
 from app.crud import auditoria
 from app.crud import usuarios as crud_usuarios
 from app.schemas.roles import RolCreate, RolUpdate
+from core.errores import ErrorNegocio
 from core.fechas import ahora
 
 SUPERADMIN = "SUPERADMIN"
 
 
-class RolDuplicado(Exception):
+class RolDuplicado(ErrorNegocio):
     """Ya existe un rol con ese nombre."""
 
+    codigo = "ROL_DUPLICADO"
+    mensaje = "Ya existe un rol con ese nombre"
 
-class RolProtegido(Exception):
+
+class RolProtegido(ErrorNegocio):
     """El rol SUPERADMIN no se desactiva."""
+
+    codigo = "ROL_PROTEGIDO"
+    mensaje = "El rol SUPERADMIN no se desactiva"
 
 
 def crear_rol(db: Database, rol: RolCreate, actor: dict) -> dict:

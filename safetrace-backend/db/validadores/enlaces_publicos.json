@@ -1,0 +1,56 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "enlaces_publicos (9.3)",
+    "required": [
+      "inmueble_id",
+      "codigo",
+      "campos_compartidos",
+      "activo",
+      "creado_por",
+      "creado_en"
+    ],
+    "properties": {
+      "inmueble_id": {
+        "bsonType": "objectId"
+      },
+      "codigo": {
+        "bsonType": "string",
+        "minLength": 16,
+        "maxLength": 64
+      },
+      "campos_compartidos": {
+        "bsonType": "array",
+        "minItems": 1,
+        "items": {
+          "enum": [
+            "LINEA_CRONOLOGICA",
+            "FOTOS",
+            "INSPECCIONES_FIRMADAS"
+          ]
+        }
+      },
+      "activo": {
+        "bsonType": "bool"
+      },
+      "creado_por": {
+        "bsonType": "objectId"
+      },
+      "creado_en": {
+        "bsonType": "date"
+      },
+      "revocado_en": {
+        "bsonType": [
+          "date",
+          "null"
+        ]
+      },
+      "revocado_por": {
+        "bsonType": [
+          "objectId",
+          "null"
+        ]
+      }
+    }
+  }
+}

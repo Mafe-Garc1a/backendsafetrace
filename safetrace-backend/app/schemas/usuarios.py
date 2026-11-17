@@ -1,6 +1,6 @@
 """Modelos Pydantic de entrada y salida de A · Cuentas: usuarios y supresión de datos.
 
-Nombres en español y en snake_case, igual que los campos de MongoDB (Diseño DataBase V2).
+Nombres en español y en snake_case, igual que los campos de MongoDB (Diseño DataBase v3).
 """
 
 from datetime import datetime
@@ -32,6 +32,10 @@ class UsuarioCreate(UsuarioBase):
     rol: Literal["PROPIETARIO", "PERITO"] = "PROPIETARIO"  # el administrador general no se registra solo
     acepta_politica: bool  # consentimiento de tratamiento de datos (RF-07, Ley 1581 de 2012)
     version_politica: str = "v1.0"
+
+
+class AdministradorCreate(UsuarioBase):
+    """El superadministrador solo da nombre y correo; la contraseña la elige el administrador (RF-74, RF-73)."""
 
 
 class UsuarioOut(UsuarioBase):

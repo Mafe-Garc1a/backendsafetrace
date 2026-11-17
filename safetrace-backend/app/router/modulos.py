@@ -39,10 +39,7 @@ def crear_modulo(
     db: Database = Depends(get_db),
     usuario: dict = Depends(requiere_permiso(modulo, "insertar")),
 ):
-    try:
-        return serializar(crud_modulos.crear_modulo(db, datos, actor_usuario(usuario)))
-    except crud_modulos.ModuloDuplicado:
-        raise HTTPException(status_code=409, detail="Ya existe un módulo con ese nombre") from None
+    return serializar(crud_modulos.crear_modulo(db, datos, actor_usuario(usuario)))
 
 
 @router.get("/admin/modulos/{modulo_id}", response_model=ModuloOut, summary="Un módulo por su nombre")
@@ -74,10 +71,7 @@ def cambiar_estado_modulo(
     db: Database = Depends(get_db),
     usuario: dict = Depends(requiere_permiso(modulo, "actualizar")),
 ):
-    try:
-        actualizado = crud_modulos.cambiar_estado_modulo(db, modulo_id, cambio.estado, actor_usuario(usuario))
-    except crud_modulos.ModuloProtegido:
-        raise HTTPException(status_code=409, detail="Los módulos roles, modulos y permisos no se desactivan") from None
+    actualizado = crud_modulos.cambiar_estado_modulo(db, modulo_id, cambio.estado, actor_usuario(usuario))
     if actualizado is None:
         raise HTTPException(status_code=404, detail="Módulo no encontrado")
     return serializar(actualizado)

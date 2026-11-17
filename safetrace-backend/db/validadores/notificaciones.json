@@ -1,0 +1,88 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "notificaciones (10.4, RF-75)",
+    "required": [
+      "usuario_id",
+      "tipo",
+      "estado",
+      "creado_en"
+    ],
+    "properties": {
+      "usuario_id": {
+        "bsonType": "objectId"
+      },
+      "tipo": {
+        "enum": [
+          "INMUEBLE_MARCADO_POR_SISMO",
+          "CAMBIO_SOLICITUD",
+          "SOLICITUD_ASIGNADA",
+          "CONSTANCIA_DISPONIBLE",
+          "RECORDATORIO_SEMESTRAL"
+        ]
+      },
+      "referencia": {
+        "bsonType": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "tipo": {
+            "enum": [
+              "SISMO",
+              "REVISION",
+              "SOLICITUD_INSPECCION",
+              "INSPECCION",
+              "INMUEBLE"
+            ]
+          },
+          "id": {
+            "bsonType": "objectId"
+          }
+        },
+        "required": [
+          "tipo",
+          "id"
+        ]
+      },
+      "canales": {
+        "bsonType": "array",
+        "items": {
+          "enum": [
+            "CORREO",
+            "APP"
+          ]
+        },
+        "maxItems": 2
+      },
+      "estado": {
+        "enum": [
+          "PENDIENTE",
+          "ENVIADA",
+          "FALLIDA"
+        ]
+      },
+      "enviada_en": {
+        "bsonType": [
+          "date",
+          "null"
+        ]
+      },
+      "leida_en": {
+        "bsonType": [
+          "date",
+          "null"
+        ]
+      },
+      "schema_version": {
+        "enum": [
+          2,
+          3
+        ]
+      },
+      "creado_en": {
+        "bsonType": "date"
+      }
+    }
+  }
+}

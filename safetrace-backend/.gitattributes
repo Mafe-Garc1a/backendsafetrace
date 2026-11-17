@@ -1,0 +1,6 @@
+# Un solo fin de línea en el repositorio (LF); Git lo adapta en cada equipo Windows
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pt binary
+*.pdf binary

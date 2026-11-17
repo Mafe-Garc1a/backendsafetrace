@@ -1,0 +1,152 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "sismos (8.4)",
+    "required": [
+      "fecha_hora",
+      "magnitud",
+      "profundidad_km",
+      "epicentro",
+      "fuentes",
+      "es_relevante",
+      "recibido_en"
+    ],
+    "properties": {
+      "fecha_hora": {
+        "bsonType": "date"
+      },
+      "magnitud": {
+        "bsonType": [
+          "double",
+          "int",
+          "long",
+          "decimal"
+        ],
+        "minimum": 0,
+        "maximum": 10
+      },
+      "profundidad_km": {
+        "bsonType": [
+          "double",
+          "int",
+          "long",
+          "decimal"
+        ],
+        "minimum": 0,
+        "maximum": 800
+      },
+      "epicentro": {
+        "bsonType": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "Point"
+            ]
+          },
+          "coordinates": {
+            "bsonType": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "bsonType": [
+                "double",
+                "int",
+                "long",
+                "decimal"
+              ],
+              "minimum": -180,
+              "maximum": 180
+            }
+          }
+        },
+        "required": [
+          "type",
+          "coordinates"
+        ]
+      },
+      "fuentes": {
+        "bsonType": "array",
+        "minItems": 1,
+        "items": {
+          "bsonType": "object",
+          "properties": {
+            "fuente": {
+              "enum": [
+                "SGC",
+                "USGS"
+              ]
+            },
+            "id_externo": {
+              "bsonType": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "magnitud": {
+              "bsonType": [
+                "double",
+                "int",
+                "long",
+                "decimal"
+              ],
+              "minimum": 0,
+              "maximum": 10
+            }
+          },
+          "required": [
+            "fuente",
+            "id_externo",
+            "magnitud"
+          ]
+        }
+      },
+      "es_relevante": {
+        "bsonType": "bool"
+      },
+      "parametros_aplicados": {
+        "bsonType": "object",
+        "properties": {
+          "magnitud_minima": {
+            "bsonType": [
+              "double",
+              "int",
+              "long",
+              "decimal"
+            ],
+            "minimum": 0,
+            "maximum": 10
+          },
+          "radio_afectacion_km": {
+            "bsonType": [
+              "double",
+              "int",
+              "long",
+              "decimal"
+            ],
+            "minimum": 0,
+            "maximum": 2000
+          }
+        },
+        "required": [
+          "magnitud_minima",
+          "radio_afectacion_km"
+        ]
+      },
+      "inmuebles_marcados": {
+        "bsonType": [
+          "int",
+          "long"
+        ],
+        "minimum": 0
+      },
+      "schema_version": {
+        "enum": [
+          2,
+          3
+        ]
+      },
+      "recibido_en": {
+        "bsonType": "date"
+      }
+    }
+  }
+}

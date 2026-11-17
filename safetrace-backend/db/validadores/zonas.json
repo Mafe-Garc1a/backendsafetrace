@@ -1,0 +1,32 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "zonas (7.3)",
+    "required": [
+      "nombre",
+      "grupo",
+      "activo"
+    ],
+    "properties": {
+      "_id": {
+        "bsonType": "string",
+        "minLength": 2,
+        "maxLength": 40,
+        "pattern": "^[A-Z][A-Z_]+$"
+      },
+      "nombre": {
+        "bsonType": "string",
+        "minLength": 2,
+        "maxLength": 80
+      },
+      "grupo": {
+        "bsonType": "string",
+        "minLength": 2,
+        "maxLength": 40
+      },
+      "activo": {
+        "bsonType": "bool"
+      }
+    }
+  }
+}

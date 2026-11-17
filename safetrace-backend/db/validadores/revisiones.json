@@ -1,0 +1,53 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "revisiones (8.3)",
+    "required": [
+      "inmueble_id",
+      "fecha",
+      "hubo_cambios",
+      "solicitara_inspeccion",
+      "registrada_por"
+    ],
+    "properties": {
+      "inmueble_id": {
+        "bsonType": "objectId"
+      },
+      "fecha": {
+        "bsonType": "date"
+      },
+      "observaciones": {
+        "bsonType": "string",
+        "minLength": 0,
+        "maxLength": 5000
+      },
+      "hubo_cambios": {
+        "bsonType": "bool"
+      },
+      "solicitara_inspeccion": {
+        "bsonType": "bool"
+      },
+      "evidencias_ids": {
+        "bsonType": "array",
+        "items": {
+          "bsonType": "objectId"
+        }
+      },
+      "registrada_por": {
+        "bsonType": "objectId"
+      },
+      "cambio_estado_aplicado": {
+        "bsonType": "bool"
+      },
+      "schema_version": {
+        "enum": [
+          2,
+          3
+        ]
+      },
+      "creado_en": {
+        "bsonType": "date"
+      }
+    }
+  }
+}

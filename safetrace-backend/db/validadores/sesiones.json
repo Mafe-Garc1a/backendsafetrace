@@ -1,0 +1,30 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "sesiones (6.2)",
+    "required": [
+      "usuario_id",
+      "token_hash",
+      "ultima_actividad",
+      "expira_en"
+    ],
+    "properties": {
+      "usuario_id": {
+        "bsonType": "objectId"
+      },
+      "token_hash": {
+        "bsonType": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "ultima_actividad": {
+        "bsonType": "date"
+      },
+      "expira_en": {
+        "bsonType": "date"
+      },
+      "creado_en": {
+        "bsonType": "date"
+      }
+    }
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "eventos (8.1)",
+    "required": [
+      "inmueble_id",
+      "tipo",
+      "fecha_evento",
+      "descripcion",
+      "origen",
+      "creado_en"
+    ],
+    "properties": {
+      "inmueble_id": {
+        "bsonType": "objectId"
+      },
+      "tipo": {
+        "enum": [
+          "MANTENIMIENTO",
+          "DANO",
+          "REPARACION",
+          "INTERVENCION",
+          "EVENTO_EXTERNO"
+        ]
+      },
+      "fecha_evento": {
+        "bsonType": "date"
+      },
+      "descripcion": {
+        "bsonType": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      },
+      "zona_id": {
+        "bsonType": [
+          "string",
+          "null"
+        ]
+      },
+      "origen": {
+        "enum": [
+          "USUARIO",
+          "SISTEMA"
+        ]
+      },
+      "sismo_id": {
+        "bsonType": [
+          "objectId",
+          "null"
+        ]
+      },
+      "estado": {
+        "enum": [
+          "VIGENTE",
+          "INVALIDO",
+          "REEMPLAZADO"
+        ]
+      },
+      "reemplazado_por": {
+        "bsonType": [
+          "objectId",
+          "null"
+        ]
+      },
+      "invalidacion": {
+        "bsonType": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "usuario_id": {
+            "bsonType": "objectId"
+          },
+          "fecha": {
+            "bsonType": "date"
+          },
+          "motivo": {
+            "bsonType": "string",
+            "minLength": 5,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "usuario_id",
+          "fecha",
+          "motivo"
+        ]
+      },
+      "registrado_por": {
+        "bsonType": [
+          "objectId",
+          "null"
+        ]
+      },
+      "schema_version": {
+        "enum": [
+          2,
+          3
+        ]
+      },
+      "creado_en": {
+        "bsonType": "date"
+      }
+    },
+    "anyOf": [
+      {
+        "properties": {
+          "tipo": {
+            "enum": [
+              "MANTENIMIENTO",
+              "DANO",
+              "REPARACION",
+              "INTERVENCION"
+            ]
+          },
+          "origen": {
+            "enum": [
+              "USUARIO"
+            ]
+          }
+        }
+      },
+      {
+        "properties": {
+          "tipo": {
+            "enum": [
+              "EVENTO_EXTERNO"
+            ]
+          },
+          "origen": {
+            "enum": [
+              "SISTEMA"
+            ]
+          },
+          "sismo_id": {
+            "bsonType": "objectId"
+          }
+        },
+        "required": [
+          "sismo_id"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,284 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "inmuebles (7.2)",
+    "required": [
+      "propietario_id",
+      "tipo_inmueble",
+      "direccion",
+      "ciudad",
+      "ubicacion",
+      "anio_construccion",
+      "sistema_constructivo",
+      "numero_pisos",
+      "estado",
+      "creado_en"
+    ],
+    "properties": {
+      "propietario_id": {
+        "bsonType": "objectId"
+      },
+      "tipo_inmueble": {
+        "enum": [
+          "CASA",
+          "APARTAMENTO",
+          "LOCAL",
+          "OFICINA"
+        ]
+      },
+      "direccion": {
+        "bsonType": "string",
+        "minLength": 5,
+        "maxLength": 150
+      },
+      "ciudad": {
+        "bsonType": "string",
+        "minLength": 2,
+        "maxLength": 60
+      },
+      "matricula_inmobiliaria": {
+        "bsonType": [
+          "string",
+          "null"
+        ],
+        "minLength": 0,
+        "maxLength": 30
+      },
+      "fecha_registro": {
+        "bsonType": "date"
+      },
+      "ubicacion": {
+        "bsonType": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "Point"
+            ]
+          },
+          "coordinates": {
+            "bsonType": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "bsonType": [
+                "double",
+                "int",
+                "long",
+                "decimal"
+              ],
+              "minimum": -180,
+              "maximum": 180
+            }
+          }
+        },
+        "required": [
+          "type",
+          "coordinates"
+        ]
+      },
+      "anio_construccion": {
+        "bsonType": [
+          "int",
+          "long"
+        ],
+        "minimum": 1800,
+        "maximum": 2100
+      },
+      "sistema_constructivo": {
+        "enum": [
+          "MAMPOSTERIA_CONFINADA",
+          "MAMPOSTERIA_NO_REFORZADA",
+          "MAMPOSTERIA_REFORZADA",
+          "PORTICOS_CONCRETO",
+          "MUROS_CONCRETO",
+          "ESTRUCTURA_METALICA",
+          "BAHAREQUE",
+          "TAPIA_ADOBE",
+          "MADERA",
+          "OTRO"
+        ]
+      },
+      "numero_pisos": {
+        "bsonType": [
+          "int",
+          "long"
+        ],
+        "minimum": 1,
+        "maximum": 200
+      },
+      "estado": {
+        "bsonType": "object",
+        "required": [
+          "codigo",
+          "nombre",
+          "desde",
+          "version"
+        ],
+        "properties": {
+          "desde": {
+            "bsonType": "date"
+          },
+          "version": {
+            "bsonType": [
+              "int",
+              "long"
+            ],
+            "minimum": 1
+          }
+        },
+        "anyOf": [
+          {
+            "properties": {
+              "codigo": {
+                "enum": [
+                  1
+                ]
+              },
+              "nombre": {
+                "enum": [
+                  "SIN_EVENTO_PENDIENTE"
+                ]
+              }
+            }
+          },
+          {
+            "properties": {
+              "codigo": {
+                "enum": [
+                  2
+                ]
+              },
+              "nombre": {
+                "enum": [
+                  "MARCADO_POR_EVENTO_SISMICO"
+                ]
+              }
+            }
+          },
+          {
+            "properties": {
+              "codigo": {
+                "enum": [
+                  3
+                ]
+              },
+              "nombre": {
+                "enum": [
+                  "REVISION_PROPIETARIO_REGISTRADA"
+                ]
+              }
+            }
+          },
+          {
+            "properties": {
+              "codigo": {
+                "enum": [
+                  4
+                ]
+              },
+              "nombre": {
+                "enum": [
+                  "INSPECCION_SOLICITADA"
+                ]
+              }
+            }
+          },
+          {
+            "properties": {
+              "codigo": {
+                "enum": [
+                  5
+                ]
+              },
+              "nombre": {
+                "enum": [
+                  "INSPECCION_FIRMADA"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "ultimo_indice": {
+        "bsonType": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "valor": {
+            "bsonType": [
+              "double",
+              "int",
+              "long",
+              "decimal"
+            ],
+            "minimum": 0,
+            "maximum": 100
+          },
+          "sismo_id": {
+            "bsonType": "objectId"
+          },
+          "calculado_en": {
+            "bsonType": "date"
+          }
+        }
+      },
+      "revision_semestral": {
+        "bsonType": "object",
+        "properties": {
+          "ultima": {
+            "bsonType": [
+              "date",
+              "null"
+            ]
+          },
+          "proxima": {
+            "bsonType": [
+              "date",
+              "null"
+            ]
+          },
+          "recordatorio_enviado_en": {
+            "bsonType": [
+              "date",
+              "null"
+            ]
+          }
+        }
+      },
+      "ultimos_eventos": {
+        "bsonType": "array",
+        "items": {
+          "bsonType": "object",
+          "properties": {
+            "evento_id": {
+              "bsonType": "objectId"
+            },
+            "tipo": {
+              "bsonType": "string"
+            },
+            "fecha": {
+              "bsonType": "date"
+            },
+            "resumen": {
+              "bsonType": "string"
+            }
+          }
+        },
+        "maxItems": 5
+      },
+      "schema_version": {
+        "enum": [
+          2,
+          3
+        ]
+      },
+      "creado_en": {
+        "bsonType": "date"
+      },
+      "actualizado_en": {
+        "bsonType": "date"
+      }
+    }
+  }
+}

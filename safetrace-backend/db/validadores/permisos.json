@@ -1,0 +1,35 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "permisos (6.8)",
+    "required": [
+      "rol",
+      "modulo",
+      "insertar",
+      "actualizar",
+      "seleccionar",
+      "borrar"
+    ],
+    "properties": {
+      "rol": {
+        "bsonType": "string",
+        "pattern": "^[A-Z][A-Z_]{2,29}$"
+      },
+      "modulo": {
+        "bsonType": "string"
+      },
+      "insertar": {
+        "bsonType": "bool"
+      },
+      "actualizar": {
+        "bsonType": "bool"
+      },
+      "seleccionar": {
+        "bsonType": "bool"
+      },
+      "borrar": {
+        "bsonType": "bool"
+      }
+    }
+  }
+}

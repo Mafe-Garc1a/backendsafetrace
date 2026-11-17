@@ -40,12 +40,7 @@ def crear_permiso(
     db: Database = Depends(get_db),
     usuario: dict = Depends(requiere_permiso(modulo, "insertar")),
 ):
-    try:
-        return serializar(crud_modulo_permisos.crear_permiso(db, permiso, actor_usuario(usuario)))
-    except crud_modulo_permisos.ReferenciaInvalida as e:
-        raise HTTPException(status_code=400, detail=str(e)) from None
-    except crud_modulo_permisos.PermisoDuplicado:
-        raise HTTPException(status_code=409, detail="Ya existe un permiso para ese rol y módulo") from None
+    return serializar(crud_modulo_permisos.crear_permiso(db, permiso, actor_usuario(usuario)))
 
 
 @router.get("/admin/permisos/{modulo_id}/{rol}", response_model=PermisoOut, summary="Permiso de un rol en un módulo")

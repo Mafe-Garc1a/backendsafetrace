@@ -27,10 +27,7 @@ def crear_rol(
     db: Database = Depends(get_db),
     usuario: dict = Depends(requiere_permiso(modulo, "insertar")),
 ):
-    try:
-        return serializar(crud_roles.crear_rol(db, rol, actor_usuario(usuario)))
-    except crud_roles.RolDuplicado:
-        raise HTTPException(status_code=409, detail="Ya existe un rol con ese nombre") from None
+    return serializar(crud_roles.crear_rol(db, rol, actor_usuario(usuario)))
 
 
 @router.get("/admin/roles", response_model=RolPage, summary="Roles, paginados")
@@ -72,10 +69,7 @@ def cambiar_estado_rol(
     db: Database = Depends(get_db),
     usuario: dict = Depends(requiere_permiso(modulo, "actualizar")),
 ):
-    try:
-        rol = crud_roles.cambiar_estado_rol(db, rol_id, cambio.estado, actor_usuario(usuario))
-    except crud_roles.RolProtegido:
-        raise HTTPException(status_code=409, detail="El rol SUPERADMIN no se desactiva") from None
+    rol = crud_roles.cambiar_estado_rol(db, rol_id, cambio.estado, actor_usuario(usuario))
     if rol is None:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
     return serializar(rol)

@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from app.crud.inspecciones import generar_codigo, huella_contenido, sumar_meses
+from app.crud.inspecciones import generar_codigo, huella_contenido
+from core.fechas import sumar_meses
 
 
 def test_codigos_aleatorios_y_distintos():

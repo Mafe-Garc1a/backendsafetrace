@@ -1,0 +1,178 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "peritos (7.1)",
+    "required": [
+      "usuario_id",
+      "documento",
+      "profesion",
+      "especialidad",
+      "matricula_profesional",
+      "estado_credencial",
+      "ultima_asignacion_en",
+      "documentos",
+      "validaciones",
+      "creado_en"
+    ],
+    "properties": {
+      "usuario_id": {
+        "bsonType": "objectId"
+      },
+      "documento": {
+        "bsonType": "object",
+        "properties": {
+          "tipo": {
+            "enum": [
+              "CC",
+              "CE",
+              "PA",
+              "PPT"
+            ]
+          },
+          "numero": {
+            "bsonType": "string",
+            "minLength": 5,
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "tipo",
+          "numero"
+        ]
+      },
+      "profesion": {
+        "bsonType": "string",
+        "minLength": 3,
+        "maxLength": 100
+      },
+      "especialidad": {
+        "bsonType": "string",
+        "minLength": 3,
+        "maxLength": 100
+      },
+      "matricula_profesional": {
+        "bsonType": "string",
+        "minLength": 3,
+        "maxLength": 40
+      },
+      "vigencia_matricula": {
+        "bsonType": [
+          "date",
+          "null"
+        ]
+      },
+      "estado_credencial": {
+        "enum": [
+          "REGISTRADO",
+          "PENDIENTE_VALIDACION",
+          "VALIDADO",
+          "RECHAZADO",
+          "VENCIDO",
+          "INCONSISTENTE"
+        ]
+      },
+      "ultima_asignacion_en": {
+        "bsonType": [
+          "date",
+          "null"
+        ]
+      },
+      "documentos": {
+        "bsonType": "array",
+        "items": {
+          "bsonType": "object",
+          "properties": {
+            "documento_id": {
+              "bsonType": "string"
+            },
+            "tipo": {
+              "enum": [
+                "MATRICULA",
+                "TITULO",
+                "CEDULA",
+                "OTRO"
+              ]
+            },
+            "archivo": {
+              "bsonType": "object",
+              "properties": {
+                "ruta": {
+                  "bsonType": "string",
+                  "minLength": 3,
+                  "maxLength": 300
+                },
+                "hash_sha256": {
+                  "bsonType": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "ruta",
+                "hash_sha256"
+              ]
+            },
+            "cargado_en": {
+              "bsonType": "date"
+            }
+          },
+          "required": [
+            "documento_id",
+            "tipo",
+            "archivo",
+            "cargado_en"
+          ]
+        }
+      },
+      "validaciones": {
+        "bsonType": "array",
+        "items": {
+          "bsonType": "object",
+          "properties": {
+            "decision": {
+              "enum": [
+                "APROBADO",
+                "RECHAZADO",
+                "INCONSISTENTE"
+              ]
+            },
+            "motivo": {
+              "bsonType": [
+                "string",
+                "null"
+              ]
+            },
+            "validado_por": {
+              "bsonType": "objectId"
+            },
+            "fecha": {
+              "bsonType": "date"
+            },
+            "documentos_revisados": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "string"
+              }
+            }
+          },
+          "required": [
+            "decision",
+            "validado_por",
+            "fecha"
+          ]
+        }
+      },
+      "schema_version": {
+        "enum": [
+          2,
+          3
+        ]
+      },
+      "creado_en": {
+        "bsonType": "date"
+      },
+      "actualizado_en": {
+        "bsonType": "date"
+      }
+    }
+  }
+}

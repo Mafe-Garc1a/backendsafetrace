@@ -28,8 +28,11 @@ from core.security import hash_token, verificar_contrasena, verify_token
 # Permiso para ver todos los inmuebles y su información en solo lectura (administrador y superadmin)
 MODULO_SUPERVISION = "supervision_inmuebles"
 
+# Permiso que, junto con la asignación, deja consultar un inmueble ajeno (perito asignado)
+MODULO_INSPECCIONES = "inspecciones"
+
 # Módulos que usa el código; una prueba comprueba que todos existan en `db/semillas.py`
-MODULOS_USADOS: set[str] = {MODULO_SUPERVISION}
+MODULOS_USADOS: set[str] = {MODULO_SUPERVISION, MODULO_INSPECCIONES}
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/sesion")
 
@@ -97,8 +100,9 @@ def obtener_inmueble_autorizado(db: Database, inmueble_id: str, usuario: dict, s
     if not solo_propietario:
         if puede_supervisar(db, usuario):
             return inmueble
-        if usuario["rol"] == "PERITO" and crud_inspecciones.perito_asignado_a_inmueble(
-            db, inmueble["_id"], usuario["_id"]
-        ):
+        # Por permiso y no por nombre de rol: los roles se administran en la base de datos
+        if verificar_permisos(
+            db, usuario["rol"], MODULO_INSPECCIONES, "seleccionar"
+        ) and crud_inspecciones.perito_asignado_a_inmueble(db, inmueble["_id"], usuario["_id"]):
             return inmueble
     raise HTTPException(status_code=403, detail="Sin permiso sobre este inmueble")

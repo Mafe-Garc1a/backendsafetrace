@@ -1,0 +1,34 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "roles (6.6)",
+    "required": [
+      "nombre_rol",
+      "estado"
+    ],
+    "properties": {
+      "_id": {
+        "bsonType": "string",
+        "pattern": "^[A-Z][A-Z_]{2,29}$"
+      },
+      "nombre_rol": {
+        "bsonType": "string",
+        "pattern": "^[A-Z][A-Z_]{2,29}$"
+      },
+      "descripcion": {
+        "bsonType": "string",
+        "minLength": 0,
+        "maxLength": 200
+      },
+      "estado": {
+        "bsonType": "bool"
+      },
+      "creado_en": {
+        "bsonType": "date"
+      },
+      "actualizado_en": {
+        "bsonType": "date"
+      }
+    }
+  }
+}

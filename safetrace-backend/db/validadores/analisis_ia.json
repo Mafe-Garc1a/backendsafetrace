@@ -1,0 +1,95 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "analisis_ia (10.1, RF-65)",
+    "required": [
+      "inmueble_id",
+      "zona_id",
+      "evidencia_anterior_id",
+      "evidencia_nueva_id",
+      "clave_par",
+      "estado",
+      "leyenda",
+      "creado_en"
+    ],
+    "properties": {
+      "inmueble_id": {
+        "bsonType": "objectId"
+      },
+      "zona_id": {
+        "bsonType": "string"
+      },
+      "evidencia_anterior_id": {
+        "bsonType": "objectId"
+      },
+      "evidencia_nueva_id": {
+        "bsonType": "objectId"
+      },
+      "clave_par": {
+        "bsonType": "string"
+      },
+      "estado": {
+        "enum": [
+          "PENDIENTE",
+          "PROCESANDO",
+          "COMPLETADO",
+          "FALLIDO",
+          "REEMPLAZADO"
+        ]
+      },
+      "tarea_id": {
+        "bsonType": [
+          "objectId",
+          "null"
+        ]
+      },
+      "resultado": {
+        "bsonType": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "cambio_detectado": {
+            "bsonType": "bool"
+          },
+          "descripcion": {
+            "bsonType": "string"
+          },
+          "confianza": {
+            "bsonType": [
+              "double",
+              "int",
+              "long",
+              "decimal"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      },
+      "leyenda": {
+        "enum": [
+          "Análisis automático mediante IA"
+        ]
+      },
+      "modelo_version": {
+        "bsonType": "string"
+      },
+      "completado_en": {
+        "bsonType": [
+          "date",
+          "null"
+        ]
+      },
+      "schema_version": {
+        "enum": [
+          2,
+          3
+        ]
+      },
+      "creado_en": {
+        "bsonType": "date"
+      }
+    }
+  }
+}

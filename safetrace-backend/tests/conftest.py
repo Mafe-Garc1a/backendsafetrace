@@ -2,8 +2,10 @@
 
 import os
 
+os.environ["JWT_SECRET"] = "secreto-de-prueba-con-mas-de-32-bytes"
 os.environ["CREDENCIAL_SERVICIO_N8N"] = "credencial-de-prueba"
 os.environ["ENTORNO"] = "pruebas"
+os.environ["REDIS_URL"] = ""  # sin Redis: la API sigue con MongoDB (degradación controlada)
 
 import mongomock  # noqa: E402
 import pytest  # noqa: E402
@@ -11,20 +13,49 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from app.crud import inmuebles as crud_inmuebles  # noqa: E402
 from app.crud.sismos import distancia_km  # noqa: E402
+from core import redis_cliente  # noqa: E402
 from core.database import get_db  # noqa: E402
 from core.fechas import ahora  # noqa: E402
 from core.security import hash_contrasena  # noqa: E402
-from db import indices, semillas  # noqa: E402
+from db import indices, semillas, validacion, validadores  # noqa: E402
 from main import app  # noqa: E402
 
 CONTRASENA = "Contrasena-segura-1"
 N8N = {"X-Credencial-Servicio": "credencial-de-prueba"}
 
 
+@pytest.fixture(autouse=True)
+def sin_redis():
+    """Cada prueba empieza sin Redis; las de Redis piden el fixture `redis_falso`."""
+    redis_cliente.usar_cliente(None)
+    yield
+    redis_cliente.usar_cliente(None)
+
+
 @pytest.fixture
-def db(monkeypatch):
+def redis_falso():
+    """Redis en memoria (fakeredis) con la misma interfaz que el cliente real."""
+    import fakeredis
+
+    cliente = fakeredis.FakeRedis(decode_responses=True)
+    redis_cliente.usar_cliente(cliente)
+    return cliente
+
+
+def incumplimientos(base) -> list[str]:
+    """Documentos que los validadores de la v3 rechazarían (mongomock no los aplica)."""
+    fallos = []
+    for coleccion in validadores.COLECCIONES:
+        esquema = validadores.cargar(coleccion)
+        for documento in base[coleccion].find():
+            fallos += [f"{coleccion} {documento.get('_id')}: {e}" for e in validacion.errores(documento, esquema)]
+    return fallos
+
+
+@pytest.fixture
+def db(monkeypatch, request):
     base = mongomock.MongoClient(tz_aware=True)["safetrace_pruebas"]
-    indices.crear(base)
+    indices.crear(base, silencioso=True)
     semillas.cargar(base)
 
     # mongomock no soporta $geoWithin: se filtra en Python con la misma distancia
@@ -36,7 +67,12 @@ def db(monkeypatch):
         ]
 
     monkeypatch.setattr(crud_inmuebles, "buscar_en_radio", buscar_en_radio)
-    return base
+    yield base
+    # Todo lo que escribió la API en la prueba debe cumplir los validadores de db/validadores (sección 12.1).
+    # Las pruebas que insertan a mano documentos incompletos lo declaran con @pytest.mark.sin_validar.
+    if request.node.get_closest_marker("sin_validar") is None:
+        fallos = incumplimientos(base)
+        assert not fallos, "Documentos que el validador rechazaría:\n" + "\n".join(fallos[:20])
 
 
 @pytest.fixture

@@ -1,0 +1,113 @@
+"""Rutas de J · Análisis de IA e índice de priorización (RF-62 a RF-68).
+
+Nada de aquí cambia el estado del inmueble (RNF-37).
+"""
+
+from fastapi import APIRouter, Depends, HTTPException
+from pymongo.database import Database
+
+from app.crud import ia_indice as crud_ia_indice
+from app.crud import inspecciones as crud_inspecciones
+from app.router.dependencies import get_current_user, obtener_inmueble_autorizado, puede_supervisar, requiere_permiso
+from app.schemas.ia_indice import AnalisisOut, AnalisisPage, IndiceOut, IndicePage, ModelosIndiceOut
+from core.database import a_object_id, get_db, serializar
+from core.paginacion import Pagina
+
+router = APIRouter()
+modulo = "analisis_ia"
+modulo_priorizacion = "priorizacion"
+
+
+@router.get(
+    "/inmuebles/{inmueble_id}/analisis-ia",
+    response_model=AnalisisPage,
+    summary="Análisis del inmueble con su leyenda",
+    description="RF-63 a RF-65",
+)
+def listar_analisis(
+    inmueble_id: str,
+    pagina: Pagina = Depends(),
+    db: Database = Depends(get_db),
+    usuario: dict = Depends(get_current_user),
+):
+    inmueble = obtener_inmueble_autorizado(db, inmueble_id, usuario)
+    datos, total = crud_ia_indice.listar_analisis(db, inmueble["_id"], pagina.saltar, pagina.tamano)
+    return pagina.respuesta(serializar(datos), total)
+
+
+@router.post(
+    "/analisis-ia/{analisis_id}/reintento",
+    response_model=AnalisisOut,
+    summary="Reintentar un análisis fallido",
+    description="RF-64, RNF-24",
+)
+def reintentar_analisis(
+    analisis_id: str,
+    db: Database = Depends(get_db),
+    usuario: dict = Depends(requiere_permiso(modulo, "actualizar")),
+):
+    analisis = crud_ia_indice.obtener_analisis(db, a_object_id(analisis_id))
+    if analisis is None:
+        raise HTTPException(status_code=404, detail="Análisis no encontrado")
+    obtener_inmueble_autorizado(db, analisis["inmueble_id"], usuario)
+    reintentado = crud_ia_indice.reintentar(db, analisis["_id"])
+    if reintentado is None:
+        raise HTTPException(status_code=409, detail="Solo se reintenta un análisis FALLIDO")
+    return serializar(reintentado)
+
+
+@router.get(
+    "/inmuebles/{inmueble_id}/indice",
+    response_model=IndiceOut,
+    summary="Índice con variables y aviso orientativo",
+    description="RF-67, RF-68",
+)
+def consultar_indice(inmueble_id: str, db: Database = Depends(get_db), usuario: dict = Depends(get_current_user)):
+    inmueble = obtener_inmueble_autorizado(db, inmueble_id, usuario)
+    indice = crud_ia_indice.ultimo_indice(db, inmueble["_id"])
+    if indice is None:
+        raise HTTPException(status_code=404, detail="El inmueble aún no tiene índice calculado")
+    return serializar(indice)
+
+
+@router.get(
+    "/inmuebles/{inmueble_id}/indice/modelos",
+    response_model=ModelosIndiceOut,
+    summary="Puntos de las gráficas de los modelos del índice (vibración, resonancia y atenuación)",
+    description=(
+        "RF-67, RF-68, RNF-39. Solo el perito asignado y el administrador. Se calculan con los datos y "
+        "parámetros guardados en el último índice; no se guardan."
+    ),
+)
+def modelos_del_indice(inmueble_id: str, db: Database = Depends(get_db), usuario: dict = Depends(get_current_user)):
+    inmueble = obtener_inmueble_autorizado(db, inmueble_id, usuario)
+    # RNF-39 (decisión M-03): al propietario se le muestran el valor, las variables y el aviso, no las gráficas
+    if not (
+        puede_supervisar(db, usuario)
+        or crud_inspecciones.perito_asignado_a_inmueble(db, inmueble["_id"], usuario["_id"])
+    ):
+        raise HTTPException(
+            status_code=403, detail="Las gráficas del índice solo las ven el perito asignado y el administrador"
+        )
+    indice = crud_ia_indice.ultimo_indice(db, inmueble["_id"])
+    if indice is None:
+        raise HTTPException(status_code=404, detail="El inmueble aún no tiene índice calculado")
+    if not indice.get("parametros"):
+        raise HTTPException(status_code=409, detail="Este índice se calculó con una fórmula sin modelos")
+    return serializar({"inmueble_id": inmueble["_id"], **crud_ia_indice.curvas_modelos(indice)})
+
+
+@router.get(
+    "/admin/sismos/{sismo_id}/priorizacion",
+    response_model=IndicePage,
+    summary="Inmuebles de un sismo ordenados por índice (qué revisar primero)",
+    description="RF-66",
+)
+def priorizacion(
+    sismo_id: str,
+    pagina: Pagina = Depends(),
+    db: Database = Depends(get_db),
+    _: dict = Depends(requiere_permiso(modulo_priorizacion, "seleccionar")),
+):
+    datos, total = crud_ia_indice.priorizacion_por_sismo(db, a_object_id(sismo_id), pagina.saltar, pagina.tamano)
+    return pagina.respuesta(serializar(datos), total)

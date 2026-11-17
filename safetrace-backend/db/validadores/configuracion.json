@@ -1,0 +1,136 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "configuracion (6.5): solo dos documentos",
+    "required": [
+      "_id"
+    ],
+    "properties": {
+      "_id": {
+        "enum": [
+          "parametros_sismo",
+          "parametros_indice"
+        ]
+      }
+    },
+    "anyOf": [
+      {
+        "bsonType": "object",
+        "properties": {
+          "_id": {
+            "enum": [
+              "parametros_sismo"
+            ]
+          },
+          "magnitud_minima": {
+            "bsonType": [
+              "double",
+              "int",
+              "long",
+              "decimal"
+            ],
+            "minimum": 0,
+            "maximum": 10
+          },
+          "radio_afectacion_km": {
+            "bsonType": [
+              "double",
+              "int",
+              "long",
+              "decimal"
+            ],
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 2000
+          },
+          "emparejamiento": {
+            "bsonType": "object",
+            "properties": {
+              "ventana_segundos": {
+                "bsonType": [
+                  "int",
+                  "long"
+                ],
+                "minimum": 1,
+                "maximum": 3600
+              },
+              "distancia_km": {
+                "bsonType": [
+                  "double",
+                  "int",
+                  "long",
+                  "decimal"
+                ],
+                "minimum": 0,
+                "exclusiveMinimum": true,
+                "maximum": 1000
+              }
+            },
+            "required": [
+              "ventana_segundos",
+              "distancia_km"
+            ]
+          },
+          "actualizado_por": {
+            "bsonType": [
+              "objectId",
+              "null"
+            ]
+          },
+          "actualizado_en": {
+            "bsonType": "date"
+          }
+        },
+        "required": [
+          "magnitud_minima",
+          "radio_afectacion_km"
+        ]
+      },
+      {
+        "bsonType": "object",
+        "properties": {
+          "_id": {
+            "enum": [
+              "parametros_indice"
+            ]
+          },
+          "formula_version": {
+            "bsonType": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "zeta": {
+            "bsonType": [
+              "double",
+              "int",
+              "long",
+              "decimal"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          },
+          "periodo_suelo_s": {
+            "bsonType": [
+              "double",
+              "int",
+              "long",
+              "decimal"
+            ],
+            "minimum": 0,
+            "maximum": 10
+          },
+          "pesos": {
+            "bsonType": "object"
+          },
+          "valores_sistema_constructivo": {
+            "bsonType": "object"
+          }
+        },
+        "required": [
+          "formula_version",
+          "pesos"
+        ]
+      }
+    ]
+  }
+}

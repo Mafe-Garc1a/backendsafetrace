@@ -1,18 +1,31 @@
-"""Escenario completo de la sección 10 del Diseño DataBase V2:
-sismo → estado 2 → revisión → solicitud → perito validado → inspección firmada → constancia → enlace público.
+"""Escenario completo del Diseño DataBase v3:
+sismo → estado 2 → revisión → solicitud → perito validado y asignado solo → inspección firmada → constancia
+→ enlace público → vencimiento.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from bson import ObjectId
 
+from core.fechas import ahora
 from tests.conftest import CONTRASENA, N8N, iniciar_sesion, registrar
 
-FOTO = {
-    "tipo_archivo": "FOTO",
-    "zona_id": "MURO_SALA",
-    "archivo": {"ruta": "inmuebles/x/f1.jpg", "hash_sha256": "a" * 64},
-}
+
+def solicitud_valida(motivo: str = "Fisura creció tras el sismo") -> dict:
+    """RF-48: tipo, motivo y fecha propuesta (no anterior a hoy)."""
+    fecha = (ahora() + timedelta(days=3)).isoformat()
+    return {"tipo_inspeccion": "POSTERIOR_SISMO", "motivo": motivo, "fecha_propuesta": fecha}
+
+
+def foto(inmueble_id: str) -> dict:
+    """Foto con la ruta que entrega POST /archivos/autorizacion para ese inmueble."""
+    return {
+        "tipo_archivo": "FOTO",
+        "zona_id": "MURO_SALA",
+        "archivo": {"ruta": f"inmuebles/{inmueble_id}/2026/08/10180000000000.jpg", "hash_sha256": "a" * 64},
+    }
+
+
 SISMO = {
     "fuente": "SGC",
     "id_externo": "SGC2026tbcd",
@@ -24,18 +37,19 @@ SISMO = {
 }
 
 
-def perito_validado(cliente, admin) -> tuple[dict, str]:
-    registrar(cliente, "perito@correo.com", rol="PERITO")
-    cabecera = iniciar_sesion(cliente, "perito@correo.com")
+def perito_validado(cliente, admin, correo: str = "perito@correo.com", matricula: str = "MP-102938475"):
+    registrar(cliente, correo, rol="PERITO")
+    cabecera = iniciar_sesion(cliente, correo)
     perfil = {
         "documento": {"tipo": "CC", "numero": "1098765432"},
         "profesion": "Ingeniero civil",
         "especialidad": "Estructuras",
-        "matricula_profesional": "MP-102938475",
+        "matricula_profesional": matricula,
     }
     perito = cliente.post("/peritos/perfil", json=perfil, headers=cabecera).json()
     assert perito["estado_credencial"] == "REGISTRADO"
-    documentos = {"documentos": [{"tipo": "MATRICULA", "archivo": {"ruta": "peritos/m.pdf", "hash_sha256": "b" * 64}}]}
+    ruta = f"peritos/{perito['id']}/20261001120000000000.pdf"
+    documentos = {"documentos": [{"tipo": "MATRICULA", "archivo": {"ruta": ruta, "hash_sha256": "b" * 64}}]}
     assert cliente.post("/peritos/documentos", json=documentos, headers=cabecera).json()["estado_credencial"] == (
         "PENDIENTE_VALIDACION"
     )
@@ -90,13 +104,15 @@ def test_escenario_completo(cliente, db, admin, propietario, inmueble):
         "zona_id": "MURO_SALA",
     }
     evento_id = cliente.post(f"/inmuebles/{inmueble_id}/eventos", json=evento, headers=propietario).json()["id"]
-    r = cliente.post(f"/inmuebles/{inmueble_id}/evidencias", json={**FOTO, "evento_id": evento_id}, headers=propietario)
+    r = cliente.post(
+        f"/inmuebles/{inmueble_id}/evidencias", json={**foto(inmueble_id), "evento_id": evento_id}, headers=propietario
+    )
     assert r.status_code == 201
     revision = {
         "observaciones": "La fisura creció",
         "hubo_cambios": True,
         "solicitara_inspeccion": True,
-        "fotos": [FOTO],
+        "fotos": [foto(inmueble_id)],
     }
     r = cliente.post(f"/inmuebles/{inmueble_id}/revisiones", json=revision, headers=propietario)
     assert r.status_code == 201 and r.json()["cambio_estado_aplicado"] is True
@@ -105,19 +121,17 @@ def test_escenario_completo(cliente, db, admin, propietario, inmueble):
     assert analisis[0]["estado"] == "PENDIENTE" and analisis[0]["leyenda"] == "Análisis automático mediante IA"
     assert db["tareas"].count_documents({"tipo": "COMPARAR_FOTOS"}) == 1
 
-    # 3. Solicitud de inspección: estado 4. Solo se asigna un perito VALIDADO
+    # 3. Solicitud de inspección: estado 4. Sin peritos validados queda PENDIENTE_ASIGNACION (RF-49, RF-72)
     solicitud = cliente.post(
-        f"/inmuebles/{inmueble_id}/solicitudes-inspeccion",
-        json={"motivo": "Fisura creció tras el sismo"},
-        headers=propietario,
+        f"/inmuebles/{inmueble_id}/solicitudes-inspeccion", json=solicitud_valida(), headers=propietario
     ).json()
+    assert solicitud["estado"] == "PENDIENTE_ASIGNACION" and solicitud["perito_id"] is None
     assert cliente.get(f"/inmuebles/{inmueble_id}/estado", headers=propietario).json()["codigo"] == 4
+    # Al validar al primer perito, el sistema le asigna la pendiente sin intervención del administrador
     perito, perito_id = perito_validado(cliente, admin)
-    assert cliente.get(f"/inmuebles/{inmueble_id}", headers=perito).status_code == 403  # aún no asignado
-    r = cliente.post(
-        f"/admin/solicitudes-inspeccion/{solicitud['id']}/asignacion", json={"perito_id": perito_id}, headers=admin
-    )
-    assert r.json()["estado"] == "ASIGNADA"
+    asignada = cliente.get(f"/inmuebles/{inmueble_id}/solicitudes-inspeccion", headers=propietario).json()["datos"][0]
+    assert asignada["estado"] == "ASIGNADA" and asignada["perito_id"] == perito_id
+    assert asignada["asignacion"]["metodo"] == "AUTOMATICA"
     assert cliente.get(f"/inmuebles/{inmueble_id}", headers=perito).status_code == 200
 
     # 4. El perito registra y firma con su contraseña: huella, constancia y estado 5
@@ -131,7 +145,7 @@ def test_escenario_completo(cliente, db, admin, propietario, inmueble):
     inspeccion = cliente.post(
         f"/solicitudes-inspeccion/{solicitud['id']}/inspeccion", json=datos, headers=perito
     ).json()
-    assert inspeccion["firma"]["firmada"] is False
+    assert inspeccion["firma"] is None and inspeccion["constancia"] is None  # borrador
     mala = cliente.post(f"/inspecciones/{inspeccion['id']}/firma", json={"contrasena": "otra"}, headers=perito)
     assert mala.status_code == 401
     firmada = cliente.post(
@@ -139,7 +153,13 @@ def test_escenario_completo(cliente, db, admin, propietario, inmueble):
     ).json()
     codigo = firmada["constancia"]["codigo"]
     assert len(codigo) == 16 and len(firmada["firma"]["huella_sha256"]) == 64
+    assert firmada["firma"]["perito"]["matricula_profesional"] == "MP-102938475"  # copia al firmar
+    assert firmada["estado_constancia"] == "VIGENTE" and firmada["es_version_activa"] is True
+    guardada = db["inspecciones"].find_one({"_id": ObjectId(inspeccion["id"])})
+    assert "estado" not in guardada["constancia"] and "es_version_activa" not in guardada  # se calculan al leer
     assert cliente.get(f"/inmuebles/{inmueble_id}/estado", headers=propietario).json()["codigo"] == 5
+    atendida = cliente.get(f"/inmuebles/{inmueble_id}/solicitudes-inspeccion", headers=propietario).json()["datos"][0]
+    assert [c["estado"] for c in atendida["cambios_estado"]] == ["PENDIENTE_ASIGNACION", "ASIGNADA", "ATENDIDA"]
     assert (
         cliente.put(f"/inspecciones/{inspeccion['id']}", json={"hallazgos": "cambio"}, headers=perito).status_code
         == 409
@@ -148,7 +168,9 @@ def test_escenario_completo(cliente, db, admin, propietario, inmueble):
     # 5. Verificación pública por código: íntegra; si alguien altera la base, deja de serlo
     verificacion = cliente.get(f"/constancias/{codigo}").json()
     assert verificacion["integra"] is True and verificacion["estado"] == "VIGENTE"
-    assert "direccion" not in verificacion["inmueble"]
+    assert verificacion["inmueble"] == {"tipo_inmueble": "APARTAMENTO", "ciudad": "Pereira"}  # BD-06
+    for campo in ("observaciones", "hallazgos", "resultado", "direccion", "propietario_id"):
+        assert campo not in str(verificacion)
     db["inspecciones"].update_one({"_id": ObjectId(inspeccion["id"])}, {"$set": {"hallazgos": "alterado"}})
     assert cliente.get(f"/constancias/{codigo}").json()["integra"] is False
     db["inspecciones"].update_one({"_id": ObjectId(inspeccion["id"])}, {"$set": {"hallazgos": datos["hallazgos"]}})
@@ -159,6 +181,9 @@ def test_escenario_completo(cliente, db, admin, propietario, inmueble):
     cliente.post(f"/inspecciones/{v2.json()['id']}/firma", json={"contrasena": CONTRASENA}, headers=perito)
     versiones = cliente.get(f"/inmuebles/{inmueble_id}/inspecciones", headers=propietario).json()
     assert [(v["version"], v["es_version_activa"]) for v in versiones] == [(2, True), (1, False)]
+    assert versiones[1]["reemplazada_por_version"] == 2
+    assert cliente.get(f"/constancias/{codigo}").json()["reemplazada_por_version"] == 2
+    assert versiones[0]["constancia"]["codigo"] != codigo  # la corrección tiene código propio (RF-54)
 
     # 7. Enlace público: sin estado ni datos personales; revocar no borra
     enlace = cliente.post(
@@ -174,10 +199,11 @@ def test_escenario_completo(cliente, db, admin, propietario, inmueble):
     assert cliente.get(f"/publico/{enlace['codigo']}").status_code == 404
     assert db["enlaces_publicos"].count_documents({}) == 1
 
-    # 8. Vencimiento: constancia VENCIDA y el inmueble vuelve al 1
+    # 8. Vencimiento: constancia VENCIDA (calculado) y el inmueble vuelve al 1
     db["inspecciones"].update_many({}, {"$set": {"constancia.vigente_hasta": datetime(2026, 1, 1)}})
     r = cliente.post("/interno/constancias/vencimientos", headers=N8N).json()
     assert r["inmuebles_a_estado_1"] == 1
+    assert cliente.get(f"/constancias/{codigo}").json()["estado"] == "VENCIDA"
     historial = cliente.get(f"/inmuebles/{inmueble_id}/historial-estados", headers=propietario).json()
     assert [h["estado_nuevo"] for h in historial["datos"]] == [1, 5, 4, 3, 2]
 

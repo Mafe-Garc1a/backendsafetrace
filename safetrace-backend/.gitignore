@@ -1,4 +1,9 @@
-# Entorno virtual (en la carpeta venv/ o, por error, en la raíz del proyecto)
+# Secretos: nunca se suben (usar .env.example como plantilla)
+.env
+.env.*
+!.env.example
+
+# Entorno virtual (en Windows, `python -m venv .` deja Lib/, Scripts/, Include/ y pyvenv.cfg en la raíz)
 venv/
 .venv/
 Lib/
@@ -6,18 +11,24 @@ Scripts/
 Include/
 pyvenv.cfg
 
-# Variables de entorno: nunca subir .env
-.env
-
-# Python y herramientas
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
 .pytest_cache/
 .ruff_cache/
+.import_linter_cache/
 .coverage
+coverage.xml
 htmlcov/
 
-# Pesos del modelo de IA (se copian desde Colab)
+# Pesos del modelo de IA (se copian desde Colab, no van al repositorio)
 modelos_ia/*
 !modelos_ia/README.md
-!modelos_ia/.gitkeep
+
+# Editor y sistema
+.vscode/*
+!.vscode/launch.json
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body { margin: 0; }</style>
+<title>Gráficas del índice SafeTrace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cabecera breve, panel para pegar el JSON, resumen de valores y tres láminas de gráfica apiladas, como hojas de un registro sísmico */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --fg: #1b2330;
+  --muted: #5b6676;
+  --line: #d9dee6;
+  --grid: #e8ebf0;
+  --ink: #2f5d8a;      /* trazo principal */
+  --signal: #c2410c;   /* el punto del inmueble */
+  --soft: #8aa4c0;     /* envolvente / curvas auxiliares */
+  --error: #b42318;
+  --ok: #1f7a4d;
+  --font-display: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "Consolas", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161d; --surface: #1a2029; --fg: #e6eaf0; --muted: #9aa6b6; --line: #2c3542; --grid: #252d38;
+    --ink: #7fb0e0; --signal: #f08a4b; --soft: #4f6a88; --error: #f97066; --ok: #4cc38a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161d; --surface: #1a2029; --fg: #e6eaf0; --muted: #9aa6b6; --line: #2c3542; --grid: #252d38;
+  --ink: #7fb0e0; --signal: #f08a4b; --soft: #4f6a88; --error: #f97066; --ok: #4cc38a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+}
+.wrap {
+  max-width: 980px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 56px;
+  display: flex; flex-direction: column; gap: 28px;
+}
+header { display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { font-family: var(--font-data); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 4vw, 34px); line-height: 1.15; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 20px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 65ch; }
+.muted { color: var(--muted); }
+
+.entrada { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.entrada ol { margin: 0; padding-left: 20px; color: var(--muted); }
+.entrada code, .eq { font-family: var(--font-data); font-size: 13.5px; }
+textarea {
+  width: 100%; min-height: 120px; resize: vertical; font-family: var(--font-data); font-size: 13px;
+  background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px;
+}
+textarea:focus-visible, button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.acciones { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button {
+  font-family: var(--font-body); font-weight: 600; font-size: 15px; border-radius: 8px; padding: 9px 16px; cursor: pointer;
+  border: 1px solid var(--ink); background: var(--ink); color: var(--surface);
+}
+button.sec { background: transparent; color: var(--ink); }
+#estado { font-size: 14.5px; }
+#estado.error { color: var(--error); }
+#estado.ok { color: var(--ok); }
+
+.resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.dato { background: var(--surface); padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dato .k { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.dato .v { font-family: var(--font-data); font-size: 19px; font-variant-numeric: tabular-nums; }
+.dato .u { font-size: 13px; color: var(--muted); }
+
+.lamina { display: flex; flex-direction: column; gap: 10px; padding-top: 22px; border-top: 1px solid var(--line); }
+.lamina .cab { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; justify-content: space-between; }
+.lamina .eq { color: var(--ink); }
+.lienzo { position: relative; width: 100%; height: 320px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+.lectura { font-size: 15px; color: var(--muted); }
+.lectura strong { color: var(--fg); font-weight: 600; }
+.aviso { font-size: 13.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+@media (max-width: 520px) { .lienzo { height: 260px; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">SafeTrace · Índice de priorización</span>
+    <h1>Modelos de ecuaciones diferenciales del índice</h1>
+    <p class="muted">Vibración libre, resonancia y atenuación, dibujadas con los datos del último índice calculado de un inmueble.</p>
+  </header>
+
+  <section class="entrada" aria-labelledby="t-entrada">
+    <h2 id="t-entrada">Cargar los datos de tu inmueble</h2>
+    <ol>
+      <li>En Swagger ejecuta <code>GET /inmuebles/{inmueble_id}/indice/modelos</code>.</li>
+      <li>Copia todo el <em>Response body</em>.</li>
+      <li>Pégalo aquí y pulsa <strong>Graficar</strong>.</li>
+    </ol>
+    <label for="json" class="muted">Respuesta JSON</label>
+    <textarea id="json" spellcheck="false" placeholder='{ "inmueble_id": "…", "vibracion_libre": { … }, "resonancia": { … }, "atenuacion": { … } }'></textarea>
+    <div class="acciones">
+      <button id="graficar" type="button">Graficar</button>
+      <button id="ejemplo" type="button" class="sec">Ver el ejemplo de 5 pisos</button>
+      <span id="estado" role="status"></span>
+    </div>
+  </section>
+
+  <section class="resumen" id="resumen" aria-label="Valores calculados"></section>
+
+  <section class="lamina" aria-labelledby="t-vib">
+    <div class="cab"><h2 id="t-vib">1. Vibración libre amortiguada</h2><span class="eq">m·x'' + c·x' + k·x = 0</span></div>
+    <div class="lienzo"><canvas id="g-vib" aria-label="Desplazamiento x(t) frente al tiempo"></canvas></div>
+    <p class="lectura" id="l-vib"></p>
+  </section>
+
+  <section class="lamina" aria-labelledby="t-res">
+    <div class="cab"><h2 id="t-res">2. Resonancia con el suelo</h2><span class="eq">m·x'' + c·x' + k·x = −m·a<sub>suelo</sub>(t)</span></div>
+    <div class="lienzo"><canvas id="g-res" aria-label="Factor de amplificación frente a la relación de periodos"></canvas></div>
+    <p class="lectura" id="l-res"></p>
+  </section>
+
+  <section class="lamina" aria-labelledby="t-ate">
+    <div class="cab"><h2 id="t-ate">3. Atenuación de la onda con la distancia</h2><span class="eq">∂²u/∂t² = v²·∇²u</span></div>
+    <div class="lienzo"><canvas id="g-ate" aria-label="Amplitud relativa frente a la distancia al epicentro"></canvas></div>
+    <p class="lectura" id="l-ate"></p>
+  </section>
+
+  <p class="aviso" id="aviso">Índice orientativo calculado por el sistema; no es una evaluación profesional.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function () {
+  // ---- Las mismas fórmulas de core/modelos_indice.py, solo para el ejemplo ----
+  function frecuencias(T, z) { const wn = 2 * Math.PI / T; return [wn, wn * Math.sqrt(1 - z * z)]; }
+  function libre(T, z, t) { const [wn, wd] = frecuencias(T, z); const b = z * wn / wd; return Math.exp(-z * wn * t) * (Math.cos(wd * t) + b * Math.sin(wd * t)); }
+  function factor(r, z) { return 1 / Math.sqrt((1 - r * r) ** 2 + (2 * z * r) ** 2); }
+  function hipo(d, h) { return Math.hypot(d, h); }
+  function cercania(R) { return R <= 20 ? 1 : 20 / R; }
+  const r4 = v => Math.round(v * 1e4) / 1e4;
+
+  function ejemplo() {
+    const pisos = 5, T = 0.1 * pisos, z = 0.05, Ts = 0.6, d = 80, h = 30;
+    const [wn, wd] = frecuencias(T, z), r = T / Ts;
+    const vib = [], res = [], ate = [];
+    for (let i = 0; i < 101; i++) { const t = 10 * T * i / 100; vib.push({ t: r4(t), x: r4(libre(T, z, t)) }); }
+    for (let i = 0; i < 121; i++) { const rr = 3 * i / 120; res.push({ r: r4(rr), factor: r4(factor(rr, z)) }); }
+    const dmax = Math.max(2 * d, 100);
+    for (let i = 0; i < 101; i++) { const dd = dmax * i / 100, R = hipo(dd, h); ate.push({ distancia_epicentral_km: Math.round(dd * 100) / 100, distancia_hipocentral_km: Math.round(R * 100) / 100, amplitud_relativa: r4(cercania(R)) }); }
+    return {
+      inmueble_id: "ejemplo", formula_version: "v2-edo",
+      aviso: "Índice orientativo calculado por el sistema; no es una evaluación profesional.",
+      vibracion_libre: { ecuacion: "m·x'' + c·x' + k·x = 0", parametros: { numero_pisos: pisos, periodo_s: T, zeta: z, omega_n_rad_s: +wn.toFixed(3), omega_d_rad_s: +wd.toFixed(3) }, puntos: vib },
+      resonancia: { ecuacion: "m·x'' + c·x' + k·x = −m·a_suelo(t)", parametros: { periodo_s: T, periodo_suelo_s: Ts, zeta: z, relacion_periodos: +r.toFixed(3), factor_resonancia: +factor(r, z).toFixed(3) }, puntos: res },
+      atenuacion: { ecuacion: "∂²u/∂t² = v²·∇²u", parametros: { distancia_epicentral_km: d, profundidad_km: h, distancia_hipocentral_km: +hipo(d, h).toFixed(1) }, puntos: ate }
+    };
+  }
+
+  // ---- Colores desde los tokens del tema ----
+  function color(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  const fmt = (v, dec) => Number(v).toLocaleString("es-CO", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+
+  let datos = null, graficas = [];
+
+  function base(xTitulo, yTitulo, extra) {
+    const fg = color("--muted"), grid = color("--grid");
+    return {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      interaction: { mode: "nearest", intersect: false },
+      plugins: {
+        legend: { labels: { color: fg, font: { family: "Source Sans 3", size: 13 }, boxWidth: 14 } },
+        tooltip: { callbacks: { label: c => `${c.dataset.label}: (${fmt(c.parsed.x, 3)}, ${fmt(c.parsed.y, 3)})` } }
+      },
+      scales: Object.assign({
+        x: { type: "linear", title: { display: true, text: xTitulo, color: fg }, ticks: { color: fg }, grid: { color: grid } },
+        y: { title: { display: true, text: yTitulo, color: fg }, ticks: { color: fg }, grid: { color: grid } }
+      }, extra || {})
+    };
+  }
+  const linea = (label, pts, col, opts) => Object.assign({ label, data: pts, borderColor: col, backgroundColor: col, borderWidth: 2, pointRadius: 0, tension: 0 }, opts || {});
+  const punto = (label, x, y) => ({ label, data: [{ x, y }], type: "scatter", borderColor: color("--signal"), backgroundColor: color("--signal"), pointRadius: 7, pointHoverRadius: 9 });
+
+  function dibujar() {
+    if (!datos || typeof Chart === "undefined") return;
+    graficas.forEach(g => g.destroy()); graficas = [];
+    const ink = color("--ink"), soft = color("--soft");
+
+    // 1. Vibración libre
+    const v = datos.vibracion_libre, pv = v.parametros;
+    const ptsV = v.puntos.map(p => ({ x: p.t, y: p.x }));
+    const wn = pv.omega_n_rad_s, z = pv.zeta;
+    const env = v.puntos.map(p => ({ x: p.t, y: Math.exp(-z * wn * p.t) }));
+    graficas.push(new Chart(document.getElementById("g-vib"), {
+      type: "line",
+      data: { datasets: [
+        linea("x(t)", ptsV, ink),
+        linea("Envolvente e^(−ζωₙt)", env, soft, { borderDash: [6, 4], borderWidth: 1.5 }),
+        linea("−e^(−ζωₙt)", env.map(p => ({ x: p.x, y: -p.y })), soft, { borderDash: [6, 4], borderWidth: 1.5 })
+      ] },
+      options: base("Tiempo t (s)", "Desplazamiento relativo x", { y: { min: -1.1, max: 1.1, title: { display: true, text: "Desplazamiento relativo x", color: color("--muted") }, ticks: { color: color("--muted") }, grid: { color: color("--grid") } } })
+    }));
+    graficas[0].options.plugins.legend.labels.filter = i => i.datasetIndex !== 2;
+    graficas[0].update();
+    document.getElementById("l-vib").innerHTML =
+      `Con <strong>${pv.numero_pisos} pisos</strong>, el periodo es T ≈ 0,1·N = <strong>${fmt(pv.periodo_s, 2)} s</strong>. ` +
+      `Sale de la solución x(t) = e<sup>−ζωₙt</sup>·[cos(ω<sub>d</sub>t) + (ζωₙ/ω<sub>d</sub>)·sen(ω<sub>d</sub>t)] con x(0) = 1 y x'(0) = 0. ` +
+      `El edificio oscila y la amplitud se apaga dentro de la envolvente (ζ = ${fmt(z, 2)}).`;
+
+    // 2. Resonancia
+    const r = datos.resonancia, pr = r.parametros;
+    graficas.push(new Chart(document.getElementById("g-res"), {
+      type: "line",
+      data: { datasets: [
+        linea("F(r) = 1 / √((1 − r²)² + (2ζr)²)", r.puntos.map(p => ({ x: p.r, y: p.factor })), ink),
+        punto("Este inmueble", pr.relacion_periodos, pr.factor_resonancia)
+      ] },
+      options: base("Relación de periodos r = T / Tₛ", "Factor de amplificación F")
+    }));
+    document.getElementById("l-res").innerHTML =
+      `r = T/Tₛ = ${fmt(pr.periodo_s, 2)} / ${fmt(pr.periodo_suelo_s, 2)} = <strong>${fmt(pr.relacion_periodos, 3)}</strong>, así que ` +
+      `<strong>F = ${fmt(pr.factor_resonancia, 3)}</strong>: el edificio amplifica ${fmt(pr.factor_resonancia, 1)} veces el movimiento del suelo. ` +
+      `El pico está en r = 1, cuando el periodo del edificio coincide con el del suelo. En el índice entra como x₃ = F/5 = <strong>${fmt(Math.min(1, pr.factor_resonancia / 5), 3)}</strong>.`;
+
+    // 3. Atenuación
+    const a = datos.atenuacion, pa = a.parametros;
+    const yA = cercania(pa.distancia_hipocentral_km);
+    graficas.push(new Chart(document.getElementById("g-ate"), {
+      type: "line",
+      data: { datasets: [
+        linea("Amplitud relativa ∝ 1/R", a.puntos.map(p => ({ x: p.distancia_epicentral_km, y: p.amplitud_relativa })), ink),
+        punto("Este inmueble", pa.distancia_epicentral_km, yA)
+      ] },
+      options: base("Distancia al epicentro d (km)", "Amplitud relativa (x₅)", { y: { min: 0, max: 1.05, title: { display: true, text: "Amplitud relativa (x₅)", color: color("--muted") }, ticks: { color: color("--muted") }, grid: { color: color("--grid") } } })
+    }));
+    document.getElementById("l-ate").innerHTML =
+      `Con simetría esférica la amplitud cae como 1/R. Con d = ${fmt(pa.distancia_epicentral_km, 1)} km y profundidad h = ${fmt(pa.profundidad_km, 1)} km, ` +
+      `R = √(d² + h²) = <strong>${fmt(pa.distancia_hipocentral_km, 1)} km</strong> y x₅ = 20/R = <strong>${fmt(yA, 3)}</strong> (vale 1 a 20 km o menos del foco).`;
+
+    // Resumen
+    const filas = [
+      ["Pisos", pv.numero_pisos, ""], ["Periodo T", fmt(pv.periodo_s, 2), "s"], ["ωₙ", fmt(pv.omega_n_rad_s, 3), "rad/s"],
+      ["ω_d", fmt(pv.omega_d_rad_s, 3), "rad/s"], ["Factor F", fmt(pr.factor_resonancia, 3), ""], ["Distancia R", fmt(pa.distancia_hipocentral_km, 1), "km"]
+    ];
+    document.getElementById("resumen").innerHTML = filas.map(([k, v, u]) =>
+      `<div class="dato"><span class="k">${k}</span><span class="v">${v} <span class="u">${u}</span></span></div>`).join("");
+    if (datos.aviso) document.getElementById("aviso").textContent = datos.aviso;
+  }
+
+  function estado(txt, tipo) { const e = document.getElementById("estado"); e.textContent = txt; e.className = tipo || ""; }
+
+  function validar(o) {
+    const ok = o && o.vibracion_libre && o.resonancia && o.atenuacion &&
+      Array.isArray(o.vibracion_libre.puntos) && Array.isArray(o.resonancia.puntos) && Array.isArray(o.atenuacion.puntos);
+    if (!ok) throw new Error("El JSON no trae vibracion_libre, resonancia y atenuacion. Copia la respuesta de GET /inmuebles/{id}/indice/modelos, no la de /indice.");
+  }
+
+  document.getElementById("graficar").addEventListener("click", () => {
+    const txt = document.getElementById("json").value.trim();
+    if (!txt) { estado("Pega primero la respuesta de Swagger.", "error"); return; }
+    try {
+      const o = JSON.parse(txt); validar(o); datos = o; dibujar();
+      estado(`Gráficas del inmueble ${o.inmueble_id || ""} listas.`, "ok");
+    } catch (e) {
+      estado(e instanceof SyntaxError ? "El texto no es un JSON válido. Copia todo el Response body, desde la primera { hasta la última }." : e.message, "error");
+    }
+  });
+  document.getElementById("ejemplo").addEventListener("click", () => {
+    datos = ejemplo(); dibujar(); estado("Mostrando el ejemplo: 5 pisos, sismo a 80 km y 30 km de profundidad.", "ok");
+  });
+
+  // Redibujar al cambiar el tema
+  const redibujar = () => dibujar();
+  try { window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redibujar); } catch (e) {}
+  new MutationObserver(redibujar).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  datos = ejemplo(); dibujar();
+  estado("Mostrando el ejemplo: 5 pisos, sismo a 80 km y 30 km de profundidad.", "ok");
+})();
+</script>
+
+</body>
+</html>

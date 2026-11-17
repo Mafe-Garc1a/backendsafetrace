@@ -1,0 +1,127 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "evidencias (8.2)",
+    "required": [
+      "inmueble_id",
+      "origen",
+      "tipo_archivo",
+      "archivo",
+      "estado",
+      "cargado_por",
+      "creado_en"
+    ],
+    "properties": {
+      "inmueble_id": {
+        "bsonType": "objectId"
+      },
+      "origen": {
+        "bsonType": "object",
+        "properties": {
+          "tipo": {
+            "enum": [
+              "EVENTO",
+              "REVISION",
+              "INSPECCION"
+            ]
+          },
+          "id": {
+            "bsonType": "objectId"
+          }
+        },
+        "required": [
+          "tipo",
+          "id"
+        ]
+      },
+      "tipo_archivo": {
+        "enum": [
+          "FOTO",
+          "DOCUMENTO"
+        ]
+      },
+      "categoria_documento": {
+        "enum": [
+          "FACTURA",
+          "ORDEN_TRABAJO",
+          "CONTRATO",
+          "INFORME_TECNICO",
+          null
+        ]
+      },
+      "zona_id": {
+        "bsonType": [
+          "string",
+          "null"
+        ]
+      },
+      "archivo": {
+        "bsonType": "object",
+        "properties": {
+          "ruta": {
+            "bsonType": "string",
+            "minLength": 3,
+            "maxLength": 300
+          },
+          "hash_sha256": {
+            "bsonType": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "ruta",
+          "hash_sha256"
+        ]
+      },
+      "estado": {
+        "enum": [
+          "VIGENTE",
+          "INVALIDA",
+          "REEMPLAZADA"
+        ]
+      },
+      "reemplazada_por": {
+        "bsonType": [
+          "objectId",
+          "null"
+        ]
+      },
+      "invalidacion": {
+        "bsonType": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "usuario_id": {
+            "bsonType": "objectId"
+          },
+          "fecha": {
+            "bsonType": "date"
+          },
+          "motivo": {
+            "bsonType": "string",
+            "minLength": 5,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "usuario_id",
+          "fecha",
+          "motivo"
+        ]
+      },
+      "cargado_por": {
+        "bsonType": "objectId"
+      },
+      "schema_version": {
+        "enum": [
+          2,
+          3
+        ]
+      },
+      "creado_en": {
+        "bsonType": "date"
+      }
+    }
+  }
+}

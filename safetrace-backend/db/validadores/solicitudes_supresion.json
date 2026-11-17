@@ -1,0 +1,67 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "solicitudes_supresion (6.4)",
+    "required": [
+      "usuario_id",
+      "fecha_solicitud",
+      "estado"
+    ],
+    "properties": {
+      "usuario_id": {
+        "bsonType": "objectId"
+      },
+      "fecha_solicitud": {
+        "bsonType": "date"
+      },
+      "estado": {
+        "enum": [
+          "RECIBIDA",
+          "ATENDIDA"
+        ]
+      },
+      "datos_eliminados": {
+        "bsonType": "array",
+        "items": {
+          "bsonType": "string"
+        }
+      },
+      "datos_conservados": {
+        "bsonType": "array",
+        "items": {
+          "bsonType": "object",
+          "properties": {
+            "dato": {
+              "bsonType": "string"
+            },
+            "motivo": {
+              "bsonType": "string"
+            }
+          },
+          "required": [
+            "dato",
+            "motivo"
+          ]
+        }
+      },
+      "atendida_por": {
+        "bsonType": [
+          "objectId",
+          "null"
+        ]
+      },
+      "fecha_atencion": {
+        "bsonType": [
+          "date",
+          "null"
+        ]
+      },
+      "schema_version": {
+        "enum": [
+          2,
+          3
+        ]
+      }
+    }
+  }
+}

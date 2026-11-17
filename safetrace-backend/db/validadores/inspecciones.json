@@ -1,0 +1,191 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "inspecciones (9.2)",
+    "required": [
+      "solicitud_id",
+      "inmueble_id",
+      "perito_id",
+      "version",
+      "version_anterior_id",
+      "fecha_inspeccion",
+      "motivo",
+      "observaciones",
+      "hallazgos",
+      "resultado",
+      "evidencias_ids",
+      "firma",
+      "constancia",
+      "aviso_legal",
+      "creado_en"
+    ],
+    "properties": {
+      "solicitud_id": {
+        "bsonType": "objectId"
+      },
+      "inmueble_id": {
+        "bsonType": "objectId"
+      },
+      "perito_id": {
+        "bsonType": "objectId"
+      },
+      "version": {
+        "bsonType": [
+          "int",
+          "long"
+        ],
+        "minimum": 1
+      },
+      "version_anterior_id": {
+        "bsonType": [
+          "objectId",
+          "null"
+        ]
+      },
+      "fecha_inspeccion": {
+        "bsonType": "date"
+      },
+      "motivo": {
+        "bsonType": "string",
+        "minLength": 5,
+        "maxLength": 500
+      },
+      "observaciones": {
+        "bsonType": "string",
+        "minLength": 3,
+        "maxLength": 5000
+      },
+      "hallazgos": {
+        "bsonType": "string",
+        "minLength": 3,
+        "maxLength": 5000
+      },
+      "resultado": {
+        "bsonType": "string",
+        "minLength": 3,
+        "maxLength": 5000
+      },
+      "evidencias_ids": {
+        "bsonType": "array",
+        "items": {
+          "bsonType": "objectId"
+        }
+      },
+      "firma": {
+        "bsonType": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "fecha": {
+            "bsonType": "date"
+          },
+          "metodo": {
+            "enum": [
+              "CONFIRMACION_CONTRASENA"
+            ]
+          },
+          "perito": {
+            "bsonType": "object",
+            "properties": {
+              "nombre_completo": {
+                "bsonType": "string"
+              },
+              "profesion": {
+                "bsonType": "string"
+              },
+              "matricula_profesional": {
+                "bsonType": "string"
+              }
+            },
+            "required": [
+              "nombre_completo",
+              "profesion",
+              "matricula_profesional"
+            ]
+          },
+          "huella_sha256": {
+            "bsonType": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "fecha",
+          "metodo",
+          "perito",
+          "huella_sha256"
+        ]
+      },
+      "constancia": {
+        "bsonType": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "codigo": {
+            "bsonType": "string",
+            "minLength": 16,
+            "maxLength": 16,
+            "pattern": "^[A-HJ-NP-Z2-9]{16}$"
+          },
+          "emitida_en": {
+            "bsonType": "date"
+          },
+          "vigencia_meses": {
+            "bsonType": [
+              "int",
+              "long"
+            ],
+            "minimum": 1,
+            "maximum": 6
+          },
+          "vigente_hasta": {
+            "bsonType": "date"
+          }
+        },
+        "required": [
+          "codigo",
+          "emitida_en",
+          "vigencia_meses",
+          "vigente_hasta"
+        ]
+      },
+      "aviso_legal": {
+        "bsonType": "string",
+        "minLength": 10,
+        "maxLength": 1000
+      },
+      "schema_version": {
+        "enum": [
+          2,
+          3
+        ]
+      },
+      "creado_en": {
+        "bsonType": "date"
+      }
+    },
+    "anyOf": [
+      {
+        "properties": {
+          "firma": {
+            "bsonType": "null"
+          },
+          "constancia": {
+            "bsonType": "null"
+          }
+        }
+      },
+      {
+        "properties": {
+          "firma": {
+            "bsonType": "object"
+          },
+          "constancia": {
+            "bsonType": "object"
+          }
+        }
+      }
+    ]
+  }
+}

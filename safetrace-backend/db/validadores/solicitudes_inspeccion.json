@@ -1,0 +1,146 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "solicitudes_inspeccion (9.1, RF-72)",
+    "required": [
+      "inmueble_id",
+      "solicitada_por",
+      "motivo",
+      "tipo_inspeccion",
+      "fecha_propuesta",
+      "estado",
+      "perito_id",
+      "cambios_estado",
+      "creado_en"
+    ],
+    "properties": {
+      "inmueble_id": {
+        "bsonType": "objectId"
+      },
+      "solicitada_por": {
+        "bsonType": "objectId"
+      },
+      "motivo": {
+        "bsonType": "string",
+        "minLength": 5,
+        "maxLength": 500
+      },
+      "tipo_inspeccion": {
+        "enum": [
+          "POSTERIOR_SISMO",
+          "SEGUIMIENTO",
+          "DANO_REPORTADO"
+        ]
+      },
+      "fecha_propuesta": {
+        "bsonType": "date"
+      },
+      "estado": {
+        "enum": [
+          "PENDIENTE_ASIGNACION",
+          "ASIGNADA",
+          "ATENDIDA"
+        ]
+      },
+      "perito_id": {
+        "bsonType": [
+          "objectId",
+          "null"
+        ]
+      },
+      "asignacion": {
+        "bsonType": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "metodo": {
+            "enum": [
+              "AUTOMATICA"
+            ]
+          },
+          "fecha": {
+            "bsonType": "date"
+          },
+          "solicitudes_activas_del_perito": {
+            "bsonType": [
+              "int",
+              "long"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "metodo",
+          "fecha",
+          "solicitudes_activas_del_perito"
+        ]
+      },
+      "cambios_estado": {
+        "bsonType": "array",
+        "minItems": 1,
+        "items": {
+          "bsonType": "object",
+          "properties": {
+            "estado": {
+              "enum": [
+                "PENDIENTE_ASIGNACION",
+                "ASIGNADA",
+                "ATENDIDA"
+              ]
+            },
+            "fecha": {
+              "bsonType": "date"
+            }
+          },
+          "required": [
+            "estado",
+            "fecha"
+          ]
+        }
+      },
+      "schema_version": {
+        "enum": [
+          2,
+          3
+        ]
+      },
+      "creado_en": {
+        "bsonType": "date"
+      }
+    },
+    "anyOf": [
+      {
+        "properties": {
+          "estado": {
+            "enum": [
+              "PENDIENTE_ASIGNACION"
+            ]
+          },
+          "perito_id": {
+            "bsonType": "null"
+          }
+        }
+      },
+      {
+        "properties": {
+          "estado": {
+            "enum": [
+              "ASIGNADA",
+              "ATENDIDA"
+            ]
+          },
+          "perito_id": {
+            "bsonType": "objectId"
+          },
+          "asignacion": {
+            "bsonType": "object"
+          }
+        },
+        "required": [
+          "asignacion"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "auditoria (10.5)",
+    "required": [
+      "coleccion",
+      "documento_id",
+      "accion",
+      "actor",
+      "fecha"
+    ],
+    "properties": {
+      "coleccion": {
+        "bsonType": "string",
+        "minLength": 2,
+        "maxLength": 40
+      },
+      "documento_id": {
+        "bsonType": [
+          "objectId",
+          "string"
+        ]
+      },
+      "accion": {
+        "enum": [
+          "REGISTRAR_USUARIO",
+          "CAMBIAR_ROL",
+          "CAMBIAR_ACTIVO",
+          "SUPRIMIR_DATOS",
+          "CREAR_ROL",
+          "ACTUALIZAR_ROL",
+          "CAMBIAR_ESTADO_ROL",
+          "CREAR_MODULO",
+          "ACTUALIZAR_MODULO",
+          "CAMBIAR_ESTADO_MODULO",
+          "CREAR_PERMISO",
+          "ACTUALIZAR_PERMISO",
+          "ACTUALIZAR_CONFIGURACION",
+          "VALIDAR_PERITO",
+          "VENCER_MATRICULA",
+          "REGISTRAR_INMUEBLE",
+          "ACTUALIZAR_INMUEBLE",
+          "REGISTRAR_EVENTO",
+          "INVALIDAR_EVIDENCIA",
+          "REGISTRAR_REVISION",
+          "CREAR_ENLACE",
+          "REVOCAR_ENLACE",
+          "SOLICITAR_RECUPERACION",
+          "RESTABLECER_CONTRASENA",
+          "INVALIDAR_EVENTO",
+          "SOLICITAR_INSPECCION",
+          "ASIGNAR_PERITO",
+          "REGISTRAR_INSPECCION",
+          "FIRMAR_INSPECCION",
+          "CORREGIR_INSPECCION",
+          "VENCER_CONSTANCIA"
+        ]
+      },
+      "actor": {
+        "anyOf": [
+          {
+            "bsonType": "object",
+            "properties": {
+              "tipo": {
+                "enum": [
+                  "USUARIO"
+                ]
+              },
+              "id": {
+                "bsonType": "objectId"
+              },
+              "rol": {
+                "bsonType": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[A-Z][A-Z_]{2,29}$"
+              }
+            },
+            "required": [
+              "tipo",
+              "id"
+            ]
+          },
+          {
+            "bsonType": "object",
+            "properties": {
+              "tipo": {
+                "enum": [
+                  "PROCESO"
+                ]
+              },
+              "id": {
+                "bsonType": "string",
+                "minLength": 1,
+                "maxLength": 60
+              }
+            },
+            "required": [
+              "tipo",
+              "id"
+            ]
+          }
+        ]
+      },
+      "cambios": {
+        "bsonType": "object"
+      },
+      "fecha": {
+        "bsonType": "date"
+      }
+    }
+  }
+}

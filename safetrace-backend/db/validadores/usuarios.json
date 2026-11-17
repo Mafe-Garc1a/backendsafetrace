@@ -1,0 +1,75 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "usuarios (6.1)",
+    "required": [
+      "correo",
+      "contrasena_hash",
+      "rol",
+      "nombre_completo",
+      "activo",
+      "creado_en"
+    ],
+    "properties": {
+      "correo": {
+        "bsonType": "string",
+        "minLength": 3,
+        "maxLength": 254,
+        "pattern": "^[^A-Z\\s]+@[^A-Z\\s]+$"
+      },
+      "contrasena_hash": {
+        "bsonType": "string",
+        "minLength": 20,
+        "maxLength": 100
+      },
+      "rol": {
+        "bsonType": "string",
+        "pattern": "^[A-Z][A-Z_]{2,29}$"
+      },
+      "nombre_completo": {
+        "bsonType": "string",
+        "minLength": 3,
+        "maxLength": 100
+      },
+      "activo": {
+        "bsonType": "bool"
+      },
+      "consentimiento": {
+        "bsonType": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "aceptado": {
+            "bsonType": "bool"
+          },
+          "version_politica": {
+            "bsonType": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "fecha": {
+            "bsonType": "date"
+          }
+        },
+        "required": [
+          "aceptado",
+          "version_politica",
+          "fecha"
+        ]
+      },
+      "schema_version": {
+        "enum": [
+          2,
+          3
+        ]
+      },
+      "creado_en": {
+        "bsonType": "date"
+      },
+      "actualizado_en": {
+        "bsonType": "date"
+      }
+    }
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "title": "tareas (10.3)",
+    "required": [
+      "tipo",
+      "estado",
+      "datos",
+      "intentos",
+      "max_intentos",
+      "creado_en"
+    ],
+    "properties": {
+      "tipo": {
+        "enum": [
+          "ENVIAR_CORREO",
+          "COMPARAR_FOTOS"
+        ]
+      },
+      "estado": {
+        "enum": [
+          "PENDIENTE",
+          "PROCESANDO",
+          "COMPLETADA",
+          "FALLIDA"
+        ]
+      },
+      "datos": {
+        "bsonType": "object",
+        "properties": {
+          "notificacion_id": {
+            "bsonType": "objectId"
+          },
+          "analisis_id": {
+            "bsonType": "objectId"
+          },
+          "recuperacion_id": {
+            "bsonType": "objectId"
+          }
+        },
+        "additionalProperties": false
+      },
+      "request_id": {
+        "bsonType": [
+          "string",
+          "null"
+        ]
+      },
+      "intentos": {
+        "bsonType": [
+          "int",
+          "long"
+        ],
+        "minimum": 0
+      },
+      "max_intentos": {
+        "bsonType": [
+          "int",
+          "long"
+        ],
+        "minimum": 1,
+        "maximum": 20
+      },
+      "disponible_desde": {
+        "bsonType": "date"
+      },
+      "tomada_por": {
+        "bsonType": [
+          "string",
+          "null"
+        ]
+      },
+      "tomada_en": {
+        "bsonType": [
+          "date",
+          "null"
+        ]
+      },
+      "error": {
+        "bsonType": [
+          "string",
+          "null"
+        ],
+        "minLength": 0,
+        "maxLength": 500
+      },
+      "creado_en": {
+        "bsonType": "date"
+      },
+      "finalizada_en": {
+        "bsonType": [
+          "date",
+          "null"
+        ]
+      }
+    }
+  }
+}

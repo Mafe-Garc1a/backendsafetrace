@@ -1,9 +1,12 @@
 """Verificación de permisos por rol y módulo (como `verify_permissions` de avisena).
 
-Solo lee las colecciones `permisos` y `modulos`; las escriben `crud/modulo_permisos.py` y `crud/modulos.py`.
+Solo lee las colecciones `permisos` y `modulos`; las escriben `crud/modulo_permisos.py` y `crud/modulos.py`,
+que borran la caché de Redis después de cada escritura (Integración Redis v2, 6.2).
 """
 
 from pymongo.database import Database
+
+from core import cache
 
 ACCIONES = ("insertar", "actualizar", "seleccionar", "borrar")
 
@@ -12,6 +15,15 @@ def verificar_permisos(db: Database, rol: str, modulo: str, accion: str) -> bool
     """True si el rol tiene la acción sobre el módulo y el módulo está activo."""
     if accion not in ACCIONES:
         raise ValueError(f"Acción desconocida: {accion}")
+    en_cache = cache.permiso_leer(rol, modulo, accion)
+    if en_cache is not None:
+        return en_cache
+    permitido = _consultar(db, rol, modulo, accion)
+    cache.permiso_guardar(rol, modulo, accion, permitido)
+    return permitido
+
+
+def _consultar(db: Database, rol: str, modulo: str, accion: str) -> bool:
     permiso = db["permisos"].find_one({"rol": rol, "modulo": modulo}, {accion: 1})
     if not permiso or not permiso.get(accion):
         return False
